@@ -1,0 +1,15 @@
+{
+  "name": "cronfy/canonical",
+  "license": "BSD-3-Clause",
+  "description": "Canonical origin solver",
+
+  "require": {
+    "php": ">=5.4.0"
+  },
+
+  "autoload": {
+    "psr-4": {
+      "cronfy\\canonical\\": "src/"
+    }
+  }
+}
