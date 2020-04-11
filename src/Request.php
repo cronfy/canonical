@@ -100,11 +100,58 @@ class Request
         $this->canonical_scheme = $canonical_scheme;
     }
 
+    protected $allowedHostsList;
+    /**
+     * @param $hosts [['scheme' => ..., 'host' => ..., 'aliases' => [...], 'default' => true|false|undefined ], ... ]
+     */
+    public function setAllowedHostsList($hosts) {
+        $this->allowedHostsList = $hosts;
+    }
+
     public function redirectToCanonical() {
         $request = $this->getRequest();
 
-        $canonical_scheme = $this->getCanonicalScheme();
-        $canonical_host = $this->getCanonicalHost();
+        $canonical_scheme = null;
+        $canonical_host = null;
+
+        $currentHost = $this->getHost();
+
+        $defaultHost = null;
+
+        foreach (($this->allowedHostsList ?: []) as $item) {
+            if (!$defaultHost) {
+                if (@$item['default']) {
+                    $defaultHost = $item;
+                }
+            }
+
+            if ($canonical_host) {
+                if ($defaultHost) {
+                    // everything resolved
+                    break;
+                }
+
+                continue; // waiting for $defaultHost
+            }
+
+            $itemAiases = @$item['aliases'] ?: [];
+
+            if (($item['host'] == $currentHost) || in_array($currentHost, $itemAiases)) {
+                $canonical_host = $item['host'];
+                $canonical_scheme = $item['scheme'];
+                break;
+            }
+        }
+
+        if (!$canonical_host) {
+            if ($defaultHost) {
+                $canonical_host = $defaultHost['host'];
+                $canonical_scheme = $defaultHost['scheme'];
+            } else {
+                $canonical_scheme = $this->getCanonicalScheme();
+                $canonical_host = $this->getCanonicalHost();
+            }
+        }
 
         // redirect to https
         if ($request->isGet) {
